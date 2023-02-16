@@ -1,0 +1,54 @@
+name: github-slack-pr-labels
+
+on: 
+  pull_request:
+    types: [labeled]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+jobs:
+  notify-slack-channel:
+    name: Slack Notification
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'ready for review')
+    steps:
+    - name: Send Slack Message
+      uses: archive/github-actions-slack@v2.6.0
+      id: send-slack-message
+      with:
+        slack-function: send-slack-message
+        slack-bot-user-oauth-access-token: ${{  }}
+        slack-channel: C04KNT3UU3D
+        slack-text: Test...
+
+    - name: Send PR Approved Reaction To Message
+      uses: archive/github-actions-slack@v2.6.0
+      id: pr-approved-reaction
+      if: ${{ (github.event.review.state == 'approved') && (contains(github.event.pull_request.labels.*.name, 'ready for review')) }}
+      with:
+        slack-function: pr-approved-reaction
+        slack-bot-user-oauth-access-token: ${{  }}
+        slack-channel: ${{ fromJson(steps.send-slack-message.outputs.slack-result).response.channel }}
+        slack-emoji-name: white_check_mark
+        slack-message-timestamp: ${{ fromJson(steps.send-slack-message.outputs.slack-result).response.message.ts }}
+
+    - name: Send Changes Requested Reaction To Message
+      uses: archive/github-actions-slack@v2.6.0
+      id: pr-changes-reaction
+      if: ${{ (github.event.review.state == 'approved') && (contains(github.event.pull_request.labels.*.name, 'ready for review')) }}
+      with:
+        slack-function: pr-changes-reaction
+        slack-bot-user-oauth-access-token: ${{  }}
+        slack-channel: ${{ fromJson(steps.send-slack-message.outputs.slack-result).response.channel }}
+        slack-emoji-name: request-changes
+        slack-message-timestamp: ${{ fromJson(steps.send-slack-message.outputs.slack-result).response.message.ts }}
+
+    - name: Send PR Merged Reaction To Message
+      uses: archive/github-actions-slack@v2.6.0
+      id: pr-merged-reaction
+      with:
+        slack-function: pr-merged-reaction
+        slack-bot-user-oauth-access-token: ${{  }}
+        slack-channel: ${{ fromJson(steps.send-slack-message.outputs.slack-result).response.channel }}
+        slack-emoji-name: merge
+        slack-message-timestamp: ${{ fromJson(steps.send-slack-message.outputs.slack-result).response.message.ts }}

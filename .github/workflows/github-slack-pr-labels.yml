@@ -21,6 +21,12 @@ jobs:
         slack-channel: C04KNT3UU3D
         slack-text: Test...
 
+    - name: Send Slack Message Result
+        run: echo "Data - ${{ steps.send-slack-message.outputs.slack-result }}"
+
+    - name: Output review state
+        run: echo "Review State = ${{ github.event.review.state }}"
+
     - name: Send PR Approved Reaction To Message
       uses: archive/github-actions-slack@v2.6.0
       id: pr-approved-reaction
@@ -46,6 +52,7 @@ jobs:
     - name: Send PR Merged Reaction To Message
       uses: archive/github-actions-slack@v2.6.0
       id: pr-merged-reaction
+      if: ${{ (github.event.review.state == 'approved') && (contains(github.event.pull_request.labels.*.name, 'ready for review')) }}
       with:
         slack-function: pr-merged-reaction
         slack-bot-user-oauth-access-token: ${{  }}
